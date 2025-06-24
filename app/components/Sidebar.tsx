@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { Home, UtensilsCrossed, Package } from "lucide-react";
+import { Home, UtensilsCrossed, Package, ChefHat } from "lucide-react";
 
 const sidebarItems = [
   { id: "home", icon: Home, label: "Home", path: "/dashboard" },
   { id: "orders", icon: UtensilsCrossed, label: "Orders", path: "/orders" },
+  { id: "menu", icon: ChefHat, label: "Menu", path: "/menu" },
   { id: "inventory", icon: Package, label: "Inventory", path: "/inventory" },
 ];
 
@@ -16,6 +17,7 @@ export default function Sidebar() {
   const getActiveTab = () => {
     if (pathname === "/dashboard") return "home";
     if (pathname === "/orders") return "orders";
+    if (pathname === "/menu") return "menu";
     if (pathname === "/inventory") return "inventory";
     return "home";
   };
