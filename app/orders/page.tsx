@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   Minus,
@@ -25,16 +25,25 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
+import { getTables, updateTableStatus } from "@/lib/api/tables";
+import { getMenuItems, getCategories } from "@/lib/api/menu";
+import { createOrder } from "@/lib/api/orders";
 
 interface MenuItem {
-  id: number;
+  id: string;
   name: string;
-  description: string;
+  description: string | null;
   price: number;
-  category: "appetizer" | "main" | "dessert" | "beverage" | "alcohol";
-  image: string;
-  prepTime: number;
-  popular?: boolean;
+  category_id: string;
+  image_url: string | null;
+  prep_time: number;
+  is_popular: boolean;
+  is_available: boolean;
+  categories?: {
+    id: string;
+    name: string;
+    description: string | null;
+  };
 }
 
 interface OrderItem extends MenuItem {
@@ -43,290 +52,83 @@ interface OrderItem extends MenuItem {
 }
 
 interface Table {
-  id: number;
+  id: string;
+  table_number: number;
   seats: number;
   status: "available" | "occupied" | "reserved" | "cleaning";
-  customer?: string;
-  orderTime?: string;
+  customer_name?: string | null;
+  order_time?: string | null;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  description: string | null;
 }
 
 export default function Orders() {
   const router = useRouter();
-  const [selectedTable, setSelectedTable] = useState<number | null>(null);
+  const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("orders");
 
-  const tables: Table[] = [
-    { id: 1, seats: 2, status: "available" },
-    {
-      id: 2,
-      seats: 4,
-      status: "occupied",
-      customer: "Smith Family",
-      orderTime: "45 min",
-    },
-    { id: 3, seats: 2, status: "available" },
-    {
-      id: 4,
-      seats: 6,
-      status: "reserved",
-      customer: "Johnson Party",
-      orderTime: "7:30 PM",
-    },
-    {
-      id: 5,
-      seats: 4,
-      status: "occupied",
-      customer: "Miller Group",
-      orderTime: "25 min",
-    },
-    { id: 6, seats: 2, status: "available" },
-    { id: 7, seats: 8, status: "available" },
-    {
-      id: 8,
-      seats: 4,
-      status: "occupied",
-      customer: "Davis Family",
-      orderTime: "15 min",
-    },
-    { id: 9, seats: 2, status: "available" },
-    { id: 10, seats: 4, status: "cleaning" },
-    { id: 11, seats: 2, status: "available" },
-    { id: 12, seats: 6, status: "available" },
-  ];
+  // Data from Supabase
+  const [tables, setTables] = useState<Table[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [submittingOrder, setSubmittingOrder] = useState(false);
 
-  const menuItems: MenuItem[] = [
-    // Appetizers
-    {
-      id: 1,
-      name: "Buffalo Wings",
-      description: "Spicy chicken wings with blue cheese dip",
-      price: 12.99,
-      category: "appetizer",
-      image:
-        "https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=300&h=200&fit=crop",
-      prepTime: 15,
-      popular: true,
-    },
-    {
-      id: 2,
-      name: "Mozzarella Sticks",
-      description: "Crispy fried mozzarella with marinara sauce",
-      price: 8.99,
-      category: "appetizer",
-      image:
-        "https://images.unsplash.com/photo-1531749668029-2db88e4276c7?w=300&h=200&fit=crop",
-      prepTime: 10,
-    },
-    {
-      id: 3,
-      name: "Loaded Nachos",
-      description: "Tortilla chips with cheese, jalapeños, and sour cream",
-      price: 11.99,
-      category: "appetizer",
-      image:
-        "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?w=300&h=200&fit=crop",
-      prepTime: 12,
-    },
+  // Load data from Supabase
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        setError(null);
 
-    // Main Courses
-    {
-      id: 4,
-      name: "Grilled Chicken Breast",
-      description: "Herb-seasoned chicken with roasted vegetables",
-      price: 18.99,
-      category: "main",
-      image:
-        "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=300&h=200&fit=crop",
-      prepTime: 25,
-      popular: true,
-    },
-    {
-      id: 5,
-      name: "Beef Burger Deluxe",
-      description: "Angus beef patty with lettuce, tomato, and fries",
-      price: 15.99,
-      category: "main",
-      image:
-        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=200&fit=crop",
-      prepTime: 20,
-    },
-    {
-      id: 6,
-      name: "Salmon Fillet",
-      description: "Grilled Atlantic salmon with lemon butter sauce",
-      price: 22.99,
-      category: "main",
-      image:
-        "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=300&h=200&fit=crop",
-      prepTime: 30,
-    },
-    {
-      id: 7,
-      name: "Pasta Carbonara",
-      description: "Creamy pasta with bacon and parmesan cheese",
-      price: 16.99,
-      category: "main",
-      image:
-        "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=300&h=200&fit=crop",
-      prepTime: 18,
-    },
-    {
-      id: 8,
-      name: "Ribeye Steak",
-      description: "12oz premium ribeye steak with garlic mashed potatoes",
-      price: 28.99,
-      category: "main",
-      image:
-        "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=300&h=200&fit=crop",
-      prepTime: 35,
-    },
+        const [tablesData, menuData, categoriesData] = await Promise.all([
+          getTables(),
+          getMenuItems(),
+          getCategories(),
+        ]);
 
-    // Desserts
-    {
-      id: 9,
-      name: "Chocolate Lava Cake",
-      description: "Warm chocolate cake with vanilla ice cream",
-      price: 7.99,
-      category: "dessert",
-      image:
-        "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=300&h=200&fit=crop",
-      prepTime: 8,
-    },
-    {
-      id: 10,
-      name: "Tiramisu",
-      description: "Classic Italian dessert with coffee and mascarpone",
-      price: 6.99,
-      category: "dessert",
-      image:
-        "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=300&h=200&fit=crop",
-      prepTime: 5,
-    },
-    {
-      id: 11,
-      name: "Cheesecake",
-      description: "New York style cheesecake with berry compote",
-      price: 6.99,
-      category: "dessert",
-      image:
-        "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=300&h=200&fit=crop",
-      prepTime: 5,
-    },
+        setTables(tablesData);
+        setMenuItems(menuData);
+        setCategories(categoriesData);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setError("Failed to load data. Please check your Supabase connection.");
+      } finally {
+        setLoading(false);
+      }
+    }
 
-    // Beverages
-    {
-      id: 12,
-      name: "Fresh Orange Juice",
-      description: "Freshly squeezed orange juice",
-      price: 4.99,
-      category: "beverage",
-      image:
-        "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=300&h=200&fit=crop",
-      prepTime: 3,
-    },
-    {
-      id: 13,
-      name: "Iced Coffee",
-      description: "Cold brew coffee with ice",
-      price: 3.99,
-      category: "beverage",
-      image:
-        "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=300&h=200&fit=crop",
-      prepTime: 2,
-    },
-    {
-      id: 14,
-      name: "Mango Smoothie",
-      description: "Fresh mango smoothie with yogurt",
-      price: 5.99,
-      category: "beverage",
-      image:
-        "https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=300&h=200&fit=crop",
-      prepTime: 5,
-      popular: true,
-    },
-    {
-      id: 15,
-      name: "Coca Cola",
-      description: "Classic Coca Cola",
-      price: 2.99,
-      category: "beverage",
-      image:
-        "https://images.unsplash.com/photo-1581636625402-29b2a704ef13?w=300&h=200&fit=crop",
-      prepTime: 1,
-    },
+    loadData();
+  }, []);
 
-    // Alcoholic Beverages
+  // Create categories with counts for filtering
+  const categoriesWithCounts = [
     {
-      id: 16,
-      name: "House Red Wine",
-      description: "Glass of our signature red wine",
-      price: 8.99,
-      category: "alcohol",
-      image:
-        "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&h=200&fit=crop",
-      prepTime: 2,
+      id: "all",
+      name: "All Items",
+      count: menuItems.length,
     },
-    {
-      id: 17,
-      name: "Craft Beer",
-      description: "Local brewery IPA",
-      price: 6.99,
-      category: "alcohol",
-      image:
-        "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=300&h=200&fit=crop",
-      prepTime: 2,
-    },
-    {
-      id: 18,
-      name: "Mojito",
-      description: "Classic mojito with fresh mint",
-      price: 9.99,
-      category: "alcohol",
-      image:
-        "https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=300&h=200&fit=crop",
-      prepTime: 5,
-    },
-  ];
-
-  const categories = [
-    { id: "all", name: "All Items", count: menuItems.length },
-    {
-      id: "appetizer",
-      name: "Appetizers",
-      count: menuItems.filter((item) => item.category === "appetizer").length,
-    },
-    {
-      id: "main",
-      name: "Main Courses",
-      count: menuItems.filter((item) => item.category === "main").length,
-    },
-    {
-      id: "dessert",
-      name: "Desserts",
-      count: menuItems.filter((item) => item.category === "dessert").length,
-    },
-    {
-      id: "beverage",
-      name: "Beverages",
-      count: menuItems.filter((item) => item.category === "beverage").length,
-    },
-    {
-      id: "alcohol",
-      name: "Alcohol",
-      count: menuItems.filter((item) => item.category === "alcohol").length,
-    },
+    ...categories.map((cat) => ({
+      ...cat,
+      count: menuItems.filter((item) => item.category_id === cat.id).length,
+    })),
   ];
 
   const filteredItems = menuItems.filter((item) => {
     const matchesCategory =
-      activeCategory === "all" || item.category === activeCategory;
+      activeCategory === "all" || item.category_id === activeCategory;
     const matchesSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase());
+      (item.description &&
+        item.description.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
 
@@ -347,7 +149,7 @@ export default function Orders() {
     }
   };
 
-  const removeFromOrder = (itemId: number) => {
+  const removeFromOrder = (itemId: string) => {
     const existingItem = orderItems.find(
       (orderItem) => orderItem.id === itemId
     );
@@ -371,9 +173,47 @@ export default function Orders() {
     );
   };
 
-  const getItemQuantity = (itemId: number) => {
+  const getItemQuantity = (itemId: string) => {
     const item = orderItems.find((orderItem) => orderItem.id === itemId);
     return item ? item.quantity : 0;
+  };
+
+  const submitOrder = async () => {
+    if (!selectedTable || orderItems.length === 0) return;
+
+    try {
+      setSubmittingOrder(true);
+
+      const orderData = {
+        table_id: selectedTable,
+        customer_name: `Table ${
+          tables.find((t) => t.id === selectedTable)?.table_number
+        }`,
+        items: orderItems.map((item) => ({
+          menu_item_id: item.id,
+          quantity: item.quantity,
+          unit_price: item.price,
+          notes: item.notes,
+        })),
+      };
+
+      await createOrder(orderData);
+
+      // Reset order state
+      setOrderItems([]);
+      setSelectedTable(null);
+
+      // Refresh tables to show updated status
+      const updatedTables = await getTables();
+      setTables(updatedTables);
+
+      alert("Order submitted successfully!");
+    } catch (err) {
+      console.error("Error submitting order:", err);
+      alert("Failed to submit order. Please try again.");
+    } finally {
+      setSubmittingOrder(false);
+    }
   };
 
   const sidebarItems = [
@@ -383,16 +223,44 @@ export default function Orders() {
   ];
 
   const headerSubtitle = selectedTable ? (
-    <div className="flex items-center space-x-2 px-3 py-1 bg-emerald-100 rounded-full">
-      <Users size={16} className="text-emerald-600" />
-      <span className="text-sm font-medium text-emerald-700">
-        Table {selectedTable}
+    <div className="flex items-center space-x-2 px-3 py-1 bg-primary-100 rounded-full">
+      <Users size={16} className="text-primary-600" />
+      <span className="text-sm font-medium text-primary-700">
+        Table {tables.find((t) => t.id === selectedTable)?.table_number}
       </span>
     </div>
   ) : null;
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-primary-50 to-cyan-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-primary-50 to-cyan-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-xl mb-4">⚠️</div>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-emerald-50 to-cyan-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-primary-50 to-cyan-50 flex">
       <Sidebar />
 
       {/* Main Content */}
@@ -425,12 +293,12 @@ export default function Orders() {
                       relative p-3 rounded-lg border-2 transition-all duration-200 text-center
                       ${
                         selectedTable === table.id
-                          ? "border-emerald-500 bg-emerald-50"
+                          ? "border-primary-500 bg-primary-50"
                           : "border-gray-200"
                       }
                       ${
                         table.status === "available"
-                          ? "bg-white hover:bg-gray-50 cursor-pointer hover:border-emerald-300"
+                          ? "bg-white hover:bg-gray-50 cursor-pointer hover:border-primary-300"
                           : "cursor-not-allowed opacity-60"
                       }
                       ${
@@ -455,12 +323,12 @@ export default function Orders() {
                       text-lg font-bold
                       ${
                         selectedTable === table.id
-                          ? "text-emerald-600"
+                          ? "text-primary-600"
                           : "text-gray-900"
                       }
                     `}
                     >
-                      {table.id}
+                      {table.table_number}
                     </div>
                     <div className="text-xs text-gray-500">
                       {table.seats} seats
@@ -470,7 +338,7 @@ export default function Orders() {
                     <div
                       className={`
                       absolute top-1 right-1 w-2 h-2 rounded-full
-                      ${table.status === "available" ? "bg-green-500" : ""}
+                      ${table.status === "available" ? "bg-primary-500" : ""}
                       ${table.status === "occupied" ? "bg-red-500" : ""}
                       ${table.status === "reserved" ? "bg-yellow-500" : ""}
                       ${table.status === "cleaning" ? "bg-gray-500" : ""}
@@ -484,7 +352,7 @@ export default function Orders() {
             {/* Category Filter */}
             <div className="mb-6 pr-6">
               <div className="flex items-center space-x-4 overflow-x-auto pb-2">
-                {categories.map((category) => (
+                {categoriesWithCounts.map((category) => (
                   <button
                     key={category.id}
                     onClick={() => setActiveCategory(category.id)}
@@ -492,19 +360,19 @@ export default function Orders() {
                       flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors
                       ${
                         activeCategory === category.id
-                          ? "bg-emerald-500 text-white"
-                          : "bg-white text-gray-700 hover:bg-emerald-50"
+                          ? "bg-primary-500"
+                          : "bg-white hover:bg-primary-50"
                       }
                     `}
                   >
                     <span>{category.name}</span>
                     <span
                       className={`
-                      text-xs px-2 py-1 rounded-full
+                      text-xs px-2 py-1 rounded-full text-white font-bold
                       ${
                         activeCategory === category.id
-                          ? "bg-emerald-400 text-emerald-100"
-                          : "bg-gray-100 text-gray-500"
+                          ? "bg-primary-400"
+                          : "bg-slate-500"
                       }
                     `}
                     >
@@ -528,20 +396,20 @@ export default function Orders() {
                       {/* Food Image */}
                       <div className="relative h-32 w-full">
                         <Image
-                          src={item.image}
+                          src={item.image_url || "/placeholder-food.jpg"}
                           alt={item.name}
                           fill
                           className="object-cover"
                           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
                         />
-                        {item.popular && (
+                        {item.is_popular && (
                           <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-orange-500 text-white text-xs rounded-full font-medium">
                             Popular
                           </div>
                         )}
                         <div className="absolute top-1 right-1 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-md">
-                          <div className="text-sm font-bold text-emerald-600">
-                            ${item.price}
+                          <div className="text-sm font-bold text-primary-600">
+                            ₱{item.price}
                           </div>
                         </div>
                       </div>
@@ -554,12 +422,12 @@ export default function Orders() {
                           </h3>
                           <div className="flex items-center text-xs text-gray-500 shrink-0">
                             <Clock size={10} className="mr-0.5" />
-                            {item.prepTime}m
+                            {item.prep_time}m
                           </div>
                         </div>
 
                         <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
-                          {item.description}
+                          {item.description || "No description available"}
                         </p>
 
                         {/* Add to Order Controls */}
@@ -568,7 +436,7 @@ export default function Orders() {
                             <div className="flex items-center space-x-2 w-full">
                               <button
                                 onClick={() => removeFromOrder(item.id)}
-                                className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center hover:bg-emerald-200 transition-colors"
+                                className="w-7 h-7 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center hover:bg-primary-200 transition-colors"
                               >
                                 <Minus size={14} />
                               </button>
@@ -577,7 +445,7 @@ export default function Orders() {
                               </span>
                               <button
                                 onClick={() => addToOrder(item)}
-                                className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 transition-colors"
+                                className="w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center hover:bg-primary-600 transition-colors"
                               >
                                 <Plus size={14} />
                               </button>
@@ -587,7 +455,7 @@ export default function Orders() {
                               <button
                                 onClick={() => addToOrder(item)}
                                 disabled={!selectedTable}
-                                className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                                className="w-8 h-8 rounded-full bg-primary-500 text-white flex items-center justify-center hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                               >
                                 <Plus size={16} />
                               </button>
@@ -610,12 +478,15 @@ export default function Orders() {
                   Order Summary
                 </h3>
                 {selectedTable ? (
-                  <div className="flex items-center space-x-2 text-sm text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                  <div className="flex items-center space-x-2 text-sm text-primary-600 bg-primary-50 px-2 py-1 rounded-full">
                     <Users size={16} />
-                    <span>Table {selectedTable}</span>
+                    <span>
+                      Table{" "}
+                      {tables.find((t) => t.id === selectedTable)?.table_number}
+                    </span>
                   </div>
                 ) : (
-                  <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                  <div className="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded-full">
                     No table selected
                   </div>
                 )}
@@ -623,11 +494,11 @@ export default function Orders() {
 
               {!selectedTable ? (
                 <div className="text-center py-8">
-                  <Users size={48} className="mx-auto text-gray-300 mb-4" />
-                  <p className="text-gray-500 font-medium">
+                  <Users size={48} className="mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-700 font-medium">
                     Select a table first
                   </p>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-gray-600">
                     Choose an available table to start taking orders
                   </p>
                 </div>
@@ -644,7 +515,7 @@ export default function Orders() {
                             {item.name}
                           </div>
                           <div className="text-sm text-gray-600">
-                            ${item.price} each
+                            ₱{item.price} each
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -659,7 +530,7 @@ export default function Orders() {
                           </span>
                           <button
                             onClick={() => addToOrder(item)}
-                            className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 transition-colors"
+                            className="w-6 h-6 rounded-full bg-primary-500 text-white flex items-center justify-center hover:bg-primary-600 transition-colors"
                           >
                             <Plus size={12} />
                           </button>
@@ -673,14 +544,22 @@ export default function Orders() {
                       <span className="text-lg font-semibold text-gray-900">
                         Total
                       </span>
-                      <span className="text-xl font-bold text-emerald-600">
-                        ${getOrderTotal().toFixed(2)}
+                      <span className="text-xl font-bold text-primary-600">
+                        ₱{getOrderTotal().toFixed(2)}
                       </span>
                     </div>
 
                     <div className="space-y-2">
-                      <button className="w-full bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium">
-                        Send to Kitchen
+                      <button
+                        onClick={submitOrder}
+                        disabled={
+                          submittingOrder ||
+                          !selectedTable ||
+                          orderItems.length === 0
+                        }
+                        className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      >
+                        {submittingOrder ? "Submitting..." : "Send to Kitchen"}
                       </button>
                       <button className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors">
                         Save Draft
@@ -692,10 +571,10 @@ export default function Orders() {
                 <div className="text-center py-8">
                   <ShoppingCart
                     size={48}
-                    className="mx-auto text-gray-300 mb-4"
+                    className="mx-auto text-gray-400 mb-4"
                   />
-                  <p className="text-gray-500">No items in order yet</p>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-gray-700">No items in order yet</p>
+                  <p className="text-sm text-gray-600">
                     Select items from the menu to get started
                   </p>
                 </div>
@@ -704,16 +583,16 @@ export default function Orders() {
               {/* Order Statistics */}
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <div className="grid grid-cols-2 gap-4 text-center">
-                  <div className="bg-emerald-50 rounded-lg p-3">
-                    <div className="text-2xl font-bold text-emerald-600">
+                  <div className="bg-primary-50 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-primary-600">
                       {orderItems.reduce((sum, item) => sum + item.quantity, 0)}
                     </div>
-                    <div className="text-xs text-emerald-700">Items</div>
+                    <div className="text-xs text-primary-700">Items</div>
                   </div>
                   <div className="bg-blue-50 rounded-lg p-3">
                     <div className="text-2xl font-bold text-blue-600">
                       {orderItems.length > 0
-                        ? Math.max(...orderItems.map((item) => item.prepTime))
+                        ? Math.max(...orderItems.map((item) => item.prep_time))
                         : 0}
                     </div>
                     <div className="text-xs text-blue-700">Max Prep (min)</div>

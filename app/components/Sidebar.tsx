@@ -1,60 +1,46 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
-import {
-  Home,
-  UtensilsCrossed,
-  Package,
-  ChefHat,
-  Settings,
-} from "lucide-react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { Home, ShoppingCart, Package, ChefHat, Settings } from "lucide-react";
 
-const sidebarItems = [
-  { id: "home", icon: Home, label: "Home", path: "/dashboard" },
-  { id: "orders", icon: UtensilsCrossed, label: "Orders", path: "/orders" },
-  { id: "menu", icon: ChefHat, label: "Menu", path: "/menu" },
-  { id: "inventory", icon: Package, label: "Inventory", path: "/inventory" },
-  { id: "settings", icon: Settings, label: "Settings", path: "/settings" },
+const navigationItems = [
+  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Orders", href: "/orders", icon: ShoppingCart },
+  { name: "Menu", href: "/menu", icon: ChefHat },
+  { name: "Inventory", href: "/inventory", icon: Package },
+  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export default function Sidebar() {
-  const router = useRouter();
   const pathname = usePathname();
 
-  const getActiveTab = () => {
-    if (pathname === "/dashboard") return "home";
-    if (pathname === "/orders") return "orders";
-    if (pathname === "/menu") return "menu";
-    if (pathname === "/inventory") return "inventory";
-    if (pathname === "/settings") return "settings";
-    return "home";
-  };
-
   return (
-    <div className="w-20 bg-white/80 backdrop-blur-sm border-r border-emerald-100 flex flex-col items-center py-6">
-      <div className="mb-8">
-        <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
-          <span className="text-white font-bold text-lg">R</span>
-        </div>
+    <div className="w-20 bg-white/80 backdrop-blur-sm border-r border-primary-100 flex flex-col items-center py-6">
+      <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center mb-8">
+        <span className="text-white font-bold text-lg">R</span>
       </div>
 
-      <nav className="flex-1 space-y-4">
-        {sidebarItems.map((item) => {
+      <nav className="flex flex-col space-y-4">
+        {navigationItems.map((item) => {
           const Icon = item.icon;
-          const isActive = getActiveTab() === item.id;
+          const isActive = pathname === item.href;
 
           return (
-            <button
-              key={item.id}
-              onClick={() => router.push(item.path)}
-              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                isActive
-                  ? "bg-emerald-500 text-white"
-                  : "text-gray-500 hover:bg-emerald-50 hover:text-emerald-600"
-              }`}
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`
+                w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200
+                ${
+                  isActive
+                    ? "bg-primary-500 text-white"
+                    : "text-gray-500 hover:bg-primary-50 hover:text-primary-600"
+                }
+              `}
             >
               <Icon size={20} />
-            </button>
+            </Link>
           );
         })}
       </nav>
