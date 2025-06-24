@@ -563,7 +563,7 @@ export default function Orders() {
                         </p>
 
                         {/* Add to Order Controls */}
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-between">
                           {quantity > 0 ? (
                             <div className="flex items-center space-x-2 w-full">
                               <button
@@ -583,14 +583,15 @@ export default function Orders() {
                               </button>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => addToOrder(item)}
-                              disabled={!selectedTable}
-                              className="flex items-center justify-center space-x-1 px-3 py-1.5 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm w-full"
-                            >
-                              <Plus size={14} />
-                              <span>Add</span>
-                            </button>
+                            <div className="w-full flex justify-end">
+                              <button
+                                onClick={() => addToOrder(item)}
+                                disabled={!selectedTable}
+                                className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                              >
+                                <Plus size={16} />
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
