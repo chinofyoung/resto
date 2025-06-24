@@ -1,13 +1,20 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { Home, UtensilsCrossed, Package, ChefHat } from "lucide-react";
+import {
+  Home,
+  UtensilsCrossed,
+  Package,
+  ChefHat,
+  Settings,
+} from "lucide-react";
 
 const sidebarItems = [
   { id: "home", icon: Home, label: "Home", path: "/dashboard" },
   { id: "orders", icon: UtensilsCrossed, label: "Orders", path: "/orders" },
   { id: "menu", icon: ChefHat, label: "Menu", path: "/menu" },
   { id: "inventory", icon: Package, label: "Inventory", path: "/inventory" },
+  { id: "settings", icon: Settings, label: "Settings", path: "/settings" },
 ];
 
 export default function Sidebar() {
@@ -19,6 +26,7 @@ export default function Sidebar() {
     if (pathname === "/orders") return "orders";
     if (pathname === "/menu") return "menu";
     if (pathname === "/inventory") return "inventory";
+    if (pathname === "/settings") return "settings";
     return "home";
   };
 

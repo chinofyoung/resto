@@ -3,6 +3,29 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Default theme colors */
+  --color-primary: #10b981;
+  --color-secondary: #06b6d4;
+  --color-accent: #f59e0b;
+
+  /* Primary color variations */
+  --color-primary-rgb: 16, 185, 129;
+  --color-primary-50: rgba(16, 185, 129, 0.05);
+  --color-primary-100: rgba(16, 185, 129, 0.1);
+  --color-primary-200: rgba(16, 185, 129, 0.2);
+  --color-primary-500: #10b981;
+  --color-primary-600: rgba(14, 166, 116, 1);
+  --color-primary-700: rgba(13, 148, 103, 1);
+
+  /* Secondary color variations */
+  --color-secondary-rgb: 6, 182, 212;
+  --color-secondary-50: rgba(6, 182, 212, 0.05);
+  --color-secondary-100: rgba(6, 182, 212, 0.1);
+
+  /* Accent color variations */
+  --color-accent-rgb: 245, 158, 11;
+  --color-accent-50: rgba(245, 158, 11, 0.05);
+  --color-accent-100: rgba(245, 158, 11, 0.1);
 }
 
 @theme inline {
@@ -23,4 +46,172 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* Background colors */
+  .bg-primary {
+    background-color: var(--color-primary);
+  }
+  .bg-primary-50 {
+    background-color: var(--color-primary-50);
+  }
+  .bg-primary-100 {
+    background-color: var(--color-primary-100);
+  }
+  .bg-primary-500 {
+    background-color: var(--color-primary-500);
+  }
+  .bg-primary-600 {
+    background-color: var(--color-primary-600);
+  }
+  .bg-primary-700 {
+    background-color: var(--color-primary-700);
+  }
+
+  .bg-secondary {
+    background-color: var(--color-secondary);
+  }
+  .bg-secondary-50 {
+    background-color: var(--color-secondary-50);
+  }
+  .bg-secondary-100 {
+    background-color: var(--color-secondary-100);
+  }
+
+  .bg-accent {
+    background-color: var(--color-accent);
+  }
+  .bg-accent-50 {
+    background-color: var(--color-accent-50);
+  }
+  .bg-accent-100 {
+    background-color: var(--color-accent-100);
+  }
+
+  /* Text colors */
+  .text-primary {
+    color: var(--color-primary);
+  }
+  .text-primary-600 {
+    color: var(--color-primary-600);
+  }
+  .text-primary-700 {
+    color: var(--color-primary-700);
+  }
+
+  .text-secondary {
+    color: var(--color-secondary);
+  }
+
+  .text-accent {
+    color: var(--color-accent);
+  }
+
+  /* Border colors */
+  .border-primary {
+    border-color: var(--color-primary);
+  }
+  .border-primary-100 {
+    border-color: var(--color-primary-100);
+  }
+  .border-primary-200 {
+    border-color: var(--color-primary-200);
+  }
+  .border-primary-500 {
+    border-color: var(--color-primary-500);
+  }
+
+  .border-secondary {
+    border-color: var(--color-secondary);
+  }
+
+  .border-accent {
+    border-color: var(--color-accent);
+  }
+
+  /* Hover states */
+  .hover\:bg-primary:hover {
+    background-color: var(--color-primary);
+  }
+  .hover\:bg-primary-50:hover {
+    background-color: var(--color-primary-50);
+  }
+  .hover\:bg-primary-600:hover {
+    background-color: var(--color-primary-600);
+  }
+  .hover\:bg-primary-700:hover {
+    background-color: var(--color-primary-700);
+  }
+
+  .hover\:text-primary:hover {
+    color: var(--color-primary);
+  }
+  .hover\:text-primary-600:hover {
+    color: var(--color-primary-600);
+  }
+
+  /* Ring colors for focus states */
+  .ring-primary {
+    --tw-ring-color: var(--color-primary);
+  }
+  .focus\:ring-primary:focus {
+    --tw-ring-color: var(--color-primary);
+  }
+}
+
+/* Legacy emerald classes that should use primary theme color */
+.bg-emerald-50 {
+  background-color: var(--color-primary-50) !important;
+}
+.bg-emerald-100 {
+  background-color: var(--color-primary-100) !important;
+}
+.bg-emerald-500 {
+  background-color: var(--color-primary-500) !important;
+}
+.bg-emerald-600 {
+  background-color: var(--color-primary-600) !important;
+}
+.bg-emerald-700 {
+  background-color: var(--color-primary-700) !important;
+}
+
+.text-emerald-600 {
+  color: var(--color-primary-600) !important;
+}
+.text-emerald-700 {
+  color: var(--color-primary-700) !important;
+}
+
+.border-emerald-100 {
+  border-color: var(--color-primary-100) !important;
+}
+.border-emerald-200 {
+  border-color: var(--color-primary-200) !important;
+}
+.border-emerald-500 {
+  border-color: var(--color-primary-500) !important;
+}
+
+.hover\:bg-emerald-50:hover {
+  background-color: var(--color-primary-50) !important;
+}
+.hover\:bg-emerald-600:hover {
+  background-color: var(--color-primary-600) !important;
+}
+.hover\:bg-emerald-700:hover {
+  background-color: var(--color-primary-700) !important;
+}
+
+.hover\:text-emerald-600:hover {
+  color: var(--color-primary-600) !important;
+}
+
+.focus\:ring-emerald-500:focus {
+  --tw-ring-color: var(--color-primary) !important;
 }
