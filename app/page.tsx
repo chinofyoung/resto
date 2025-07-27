@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, User, Lock, Loader2 } from "lucide-react";
-import Image from "next/image";
 
 export default function Login() {
   const router = useRouter();

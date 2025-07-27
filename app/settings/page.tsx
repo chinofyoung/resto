@@ -5,17 +5,9 @@ import {
   Palette,
   Monitor,
   Bell,
-  Globe,
   Shield,
-  User,
   Store,
-  CreditCard,
   Printer,
-  Wifi,
-  Volume2,
-  Moon,
-  Sun,
-  Check,
   RotateCcw,
   Save,
 } from "lucide-react";
@@ -189,16 +181,16 @@ export default function Settings() {
     { id: "security", name: "Security", icon: Shield },
   ];
 
-  const updateSettings = (key: keyof Settings, value: any) => {
+  const updateSettings = (key: keyof Settings, value: Settings[keyof Settings]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
     setUnsavedChanges(true);
 
     // Apply color changes immediately
-    if (key === "brandColor") {
+    if (key === "brandColor" && typeof value === "string") {
       updateColors({ primary: value });
-    } else if (key === "secondaryColor") {
+    } else if (key === "secondaryColor" && typeof value === "string") {
       updateColors({ secondary: value });
-    } else if (key === "accentColor") {
+    } else if (key === "accentColor" && typeof value === "string") {
       updateColors({ accent: value });
     }
   };
@@ -294,6 +286,7 @@ export default function Settings() {
         });
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update settings when theme context changes

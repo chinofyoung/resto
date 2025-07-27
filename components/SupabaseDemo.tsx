@@ -9,13 +9,37 @@ import { getOrderStats } from "@/lib/api/orders";
 // This is a demo component showing how to integrate Supabase APIs
 // You can use these patterns in your existing pages
 
+interface Table {
+  id: string;
+  table_number: number;
+  seats: number;
+  status: string;
+}
+
+interface MenuItem {
+  id: string;
+  name: string;
+  price: number;
+  description?: string | null;
+  image_url?: string | null;
+  prep_time?: number;
+  [key: string]: unknown;
+}
+
+interface Stats {
+  total?: number;
+  available?: number;
+  occupied?: number;
+  [key: string]: unknown;
+}
+
 export default function SupabaseDemo() {
-  const [tables, setTables] = useState<any[]>([]);
-  const [tableStats, setTableStats] = useState<any>({});
-  const [menuItems, setMenuItems] = useState<any[]>([]);
-  const [popularItems, setPopularItems] = useState<any[]>([]);
-  const [inventoryStats, setInventoryStats] = useState<any>({});
-  const [orderStats, setOrderStats] = useState<any>({});
+  const [tables, setTables] = useState<Table[]>([]);
+  const [tableStats, setTableStats] = useState<Stats>({});
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [popularItems, setPopularItems] = useState<MenuItem[]>([]);
+  const [inventoryStats, setInventoryStats] = useState<Stats>({});
+  const [orderStats, setOrderStats] = useState<Stats>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -156,7 +180,7 @@ export default function SupabaseDemo() {
 
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-sm font-medium text-gray-500 mb-2">
-            Today's Orders
+            Today&apos;s Orders
           </h3>
           <div className="text-2xl font-bold text-gray-900">
             {orderStats.total || 0}
@@ -241,7 +265,7 @@ export default function SupabaseDemo() {
           {popularItems.map((item) => (
             <div key={item.id} className="border rounded-lg p-4">
               <img
-                src={item.image_url}
+                src={item.image_url || ""}
                 alt={item.name}
                 className="w-full h-32 object-cover rounded mb-3"
               />
@@ -269,7 +293,7 @@ export default function SupabaseDemo() {
           <p>
             1. Import the API functions:{" "}
             <code className="bg-blue-100 px-1 rounded">
-              import {`{ getTables }`} from '@/lib/api/tables'
+              import {`{ getTables }`} from &apos;@/lib/api/tables&apos;
             </code>
           </p>
           <p>

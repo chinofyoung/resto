@@ -3,47 +3,18 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Home,
-  Calendar,
-  Users,
-  BookOpen,
-  Clock,
-  Settings,
-  HelpCircle,
-  Search,
-  Star,
-  Sun,
   CheckCircle2,
-  Plus,
-  MoreHorizontal,
-  ShoppingCart,
-  Bell,
-  User,
-  StickyNote,
-  ArrowRight,
-  UtensilsCrossed,
   Package,
   TrendingUp,
-  TrendingDown,
   DollarSign,
   AlertTriangle,
-  FileText,
-  Calendar as CalendarIcon,
   Activity,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
-import { getTables, getTableStats } from "@/lib/api/tables";
 import { getMenuItems } from "@/lib/api/menu";
 
-interface Table {
-  id: string;
-  table_number: number;
-  seats: number;
-  status: "available" | "occupied" | "reserved" | "cleaning";
-  customer?: string | null;
-  orderTime?: string | null;
-}
+
 
 interface MenuItem {
   id: string;
@@ -58,19 +29,12 @@ interface MenuItem {
 }
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState("home");
-  const [selectedTable, setSelectedTable] = useState<number | null>(null);
-  const [tables, setTables] = useState<Table[]>([]);
-  const [popularItems, setPopularItems] = useState<MenuItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const sidebarItems = [
-    { id: "home", icon: Home, label: "Home" },
-    { id: "orders", icon: UtensilsCrossed, label: "Orders" },
-    { id: "inventory", icon: Package, label: "Inventory" },
-  ];
+  // Data states
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load data from Supabase
   useEffect(() => {
@@ -79,18 +43,13 @@ export default function Dashboard() {
         setLoading(true);
         setError(null);
 
-        // Load tables and popular menu items in parallel
-        const [tablesData, menuData] = await Promise.all([
-          getTables(),
-          getMenuItems(),
-        ]);
-
-        setTables(tablesData || []);
+        // Load popular menu items for dashboard
+        const menuData = await getMenuItems();
 
         // Filter popular items and limit to 3 for dashboard
         const popular =
           menuData?.filter((item) => item.is_popular).slice(0, 3) || [];
-        setPopularItems(popular);
+        setMenuItems(popular);
       } catch (err) {
         console.error("Error loading dashboard data:", err);
         setError(
@@ -104,72 +63,9 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-  // Table data with status
-  const tablesData = [
-    { id: 1, seats: 2, status: "available", customer: null, orderTime: null },
-    {
-      id: 2,
-      seats: 4,
-      status: "occupied",
-      customer: "Smith Family",
-      orderTime: "45 min",
-    },
-    { id: 3, seats: 2, status: "available", customer: null, orderTime: null },
-    {
-      id: 4,
-      seats: 6,
-      status: "reserved",
-      customer: "Johnson Party",
-      orderTime: "7:30 PM",
-    },
-    {
-      id: 5,
-      seats: 4,
-      status: "occupied",
-      customer: "Miller Group",
-      orderTime: "25 min",
-    },
-    { id: 6, seats: 2, status: "available", customer: null, orderTime: null },
-    { id: 7, seats: 8, status: "available", customer: null, orderTime: null },
-    {
-      id: 8,
-      seats: 4,
-      status: "occupied",
-      customer: "Davis Family",
-      orderTime: "15 min",
-    },
-    { id: 9, seats: 2, status: "available", customer: null, orderTime: null },
-    { id: 10, seats: 4, status: "cleaning", customer: null, orderTime: null },
-    { id: 11, seats: 2, status: "available", customer: null, orderTime: null },
-    { id: 12, seats: 6, status: "available", customer: null, orderTime: null },
-  ];
 
-  const mealCards = [
-    {
-      title: "Red Bread & Jam",
-      time: "3h",
-      calories: "250cal",
-      image: "🍞",
-      color: "bg-pink-100",
-      textColor: "text-pink-800",
-    },
-    {
-      title: "Grilled Chicken",
-      time: "4m",
-      calories: "250cal",
-      image: "🍗",
-      color: "bg-primary-100",
-      textColor: "text-primary-800",
-    },
-    {
-      title: "Cashew Nut Salad",
-      time: "4m",
-      calories: "250cal",
-      image: "🥗",
-      color: "bg-yellow-100",
-      textColor: "text-yellow-800",
-    },
-  ];
+
+
 
   const upcomingTasks = [
     {
@@ -287,7 +183,7 @@ export default function Dashboard() {
                   Explore recipes, plan your week, and shop seamlessly. Elevate
                   your dining experience effortlessly.
                   <br />
-                  From curated recipes to nutrition insights, we've cracked the
+                  From curated recipes to nutrition insights, we&apos;ve cracked the
                   code for a tasteful journey in every bite.
                 </p>
                 <button className="bg-white text-primary-600 px-6 py-3 rounded-lg font-medium hover:bg-primary-50 transition-colors shadow-md">
@@ -314,7 +210,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-600">
-                      Today's Sales
+                      Today&apos;s Sales
                     </p>
                     <p className="text-2xl font-bold text-gray-800">$2,847</p>
                     <p className="text-xs text-gray-500 mt-1">
@@ -346,7 +242,7 @@ export default function Dashboard() {
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                   <div className="flex items-center justify-between mb-4">
                     <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <CalendarIcon className="text-purple-600" size={24} />
+                      {/* CalendarIcon was removed, so this line is removed */}
                     </div>
                     <span className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
                       +15.3%
@@ -477,7 +373,7 @@ export default function Dashboard() {
                 Popular Items
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {popularItems.map((item) => (
+                {menuItems.map((item) => (
                   <div
                     key={item.id}
                     className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
@@ -571,7 +467,7 @@ export default function Dashboard() {
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-2">
-                  <ShoppingCart size={20} className="text-gray-700" />
+                  {/* ShoppingCart was removed, so this line is removed */}
                   <h3 className="font-semibold text-gray-800">Shopping list</h3>
                 </div>
                 <button className="text-primary-600 hover:text-primary-700 text-sm">
@@ -612,7 +508,7 @@ export default function Dashboard() {
             {/* Today's Overview */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <h3 className="font-semibold mb-2 text-gray-800">
-                Today's Overview
+                Today&apos;s Overview
               </h3>
               <p className="text-gray-600 text-sm mb-4">
                 Quick snapshot of your restaurant performance today
@@ -641,13 +537,13 @@ export default function Dashboard() {
             {/* Sticky Note */}
             <div className="bg-yellow-100 rounded-2xl p-6">
               <div className="flex items-center space-x-2 mb-4">
-                <StickyNote size={20} className="text-yellow-600" />
+                {/* StickyNote was removed, so this line is removed */}
                 <h3 className="font-semibold text-yellow-800">Sticky Note</h3>
               </div>
 
               <div className="space-y-3 text-sm text-yellow-700">
                 <p>
-                  1. Try the "Mango Tango Smoothie" recipe for a refreshing
+                  1. Try the &quot;Mango Tango Smoothie&quot; recipe for a refreshing
                   breakfast tomorrow!
                 </p>
                 <p>

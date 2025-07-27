@@ -7,25 +7,11 @@ import {
   ShoppingCart,
   Clock,
   Users,
-  X,
-  Search,
-  Filter,
-  Home,
-  BookOpen,
-  Settings,
-  HelpCircle,
-  UtensilsCrossed,
-  Star,
-  Sun,
-  Bell,
-  User,
-  Package,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
-import { getTables, updateTableStatus } from "@/lib/api/tables";
+import { getTables } from "@/lib/api/tables";
 import { getMenuItems, getCategories } from "@/lib/api/menu";
 import { createOrder } from "@/lib/api/orders";
 
@@ -67,20 +53,18 @@ interface Category {
 }
 
 export default function Orders() {
-  const router = useRouter();
-  const [selectedTable, setSelectedTable] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("orders");
-
-  // Data from Supabase
+  // Data states
   const [tables, setTables] = useState<Table[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [submittingOrder, setSubmittingOrder] = useState(false);
+
+  // UI states  
+  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [cartItems, setCartItems] = useState<OrderItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Load data from Supabase
   useEffect(() => {
@@ -124,7 +108,7 @@ export default function Orders() {
 
   const filteredItems = menuItems.filter((item) => {
     const matchesCategory =
-      activeCategory === "all" || item.category_id === activeCategory;
+      selectedCategory === "all" || item.category_id === selectedCategory;
     const matchesSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (item.description &&
@@ -133,63 +117,61 @@ export default function Orders() {
   });
 
   const addToOrder = (item: MenuItem) => {
-    const existingItem = orderItems.find(
+    const existingItem = cartItems.find(
       (orderItem) => orderItem.id === item.id
     );
     if (existingItem) {
-      setOrderItems(
-        orderItems.map((orderItem) =>
+      setCartItems(
+        cartItems.map((orderItem) =>
           orderItem.id === item.id
             ? { ...orderItem, quantity: orderItem.quantity + 1 }
             : orderItem
         )
       );
     } else {
-      setOrderItems([...orderItems, { ...item, quantity: 1 }]);
+      setCartItems([...cartItems, { ...item, quantity: 1 }]);
     }
   };
 
   const removeFromOrder = (itemId: string) => {
-    const existingItem = orderItems.find(
+    const existingItem = cartItems.find(
       (orderItem) => orderItem.id === itemId
     );
     if (existingItem && existingItem.quantity > 1) {
-      setOrderItems(
-        orderItems.map((orderItem) =>
+      setCartItems(
+        cartItems.map((orderItem) =>
           orderItem.id === itemId
             ? { ...orderItem, quantity: orderItem.quantity - 1 }
             : orderItem
         )
       );
     } else {
-      setOrderItems(orderItems.filter((orderItem) => orderItem.id !== itemId));
+      setCartItems(cartItems.filter((orderItem) => orderItem.id !== itemId));
     }
   };
 
   const getOrderTotal = () => {
-    return orderItems.reduce(
+    return cartItems.reduce(
       (total, item) => total + item.price * item.quantity,
       0
     );
   };
 
   const getItemQuantity = (itemId: string) => {
-    const item = orderItems.find((orderItem) => orderItem.id === itemId);
+    const item = cartItems.find((orderItem) => orderItem.id === itemId);
     return item ? item.quantity : 0;
   };
 
   const submitOrder = async () => {
-    if (!selectedTable || orderItems.length === 0) return;
+    if (!selectedTable || cartItems.length === 0) return;
 
     try {
-      setSubmittingOrder(true);
+      // setSubmittingOrder(true); // This state was removed, so this line is removed.
 
       const orderData = {
-        table_id: selectedTable,
-        customer_name: `Table ${
-          tables.find((t) => t.id === selectedTable)?.table_number
-        }`,
-        items: orderItems.map((item) => ({
+        table_id: selectedTable.id,
+        customer_name: `Table ${selectedTable.table_number}`,
+        items: cartItems.map((item) => ({
           menu_item_id: item.id,
           quantity: item.quantity,
           unit_price: item.price,
@@ -200,7 +182,7 @@ export default function Orders() {
       await createOrder(orderData);
 
       // Reset order state
-      setOrderItems([]);
+      setCartItems([]);
       setSelectedTable(null);
 
       // Refresh tables to show updated status
@@ -212,21 +194,17 @@ export default function Orders() {
       console.error("Error submitting order:", err);
       alert("Failed to submit order. Please try again.");
     } finally {
-      setSubmittingOrder(false);
+      // setSubmittingOrder(false); // This state was removed, so this line is removed.
     }
   };
 
-  const sidebarItems = [
-    { id: "home", icon: Home, label: "Home" },
-    { id: "orders", icon: UtensilsCrossed, label: "Orders" },
-    { id: "inventory", icon: Package, label: "Inventory" },
-  ];
+
 
   const headerSubtitle = selectedTable ? (
     <div className="flex items-center space-x-2 px-3 py-1 bg-primary-100 rounded-full">
       <Users size={16} className="text-primary-600" />
       <span className="text-sm font-medium text-primary-700">
-        Table {tables.find((t) => t.id === selectedTable)?.table_number}
+        Table {selectedTable.table_number}
       </span>
     </div>
   ) : null;
@@ -286,13 +264,13 @@ export default function Orders() {
                   <button
                     key={table.id}
                     onClick={() =>
-                      table.status === "available" && setSelectedTable(table.id)
+                      table.status === "available" && setSelectedTable(table)
                     }
                     disabled={table.status !== "available"}
                     className={`
                       relative p-3 rounded-lg border-2 transition-all duration-200 text-center
                       ${
-                        selectedTable === table.id
+                        selectedTable?.id === table.id
                           ? "border-primary-500 bg-primary-50"
                           : "border-gray-200"
                       }
@@ -322,7 +300,7 @@ export default function Orders() {
                       className={`
                       text-lg font-bold
                       ${
-                        selectedTable === table.id
+                        selectedTable?.id === table.id
                           ? "text-primary-600"
                           : "text-gray-900"
                       }
@@ -355,11 +333,11 @@ export default function Orders() {
                 {categoriesWithCounts.map((category) => (
                   <button
                     key={category.id}
-                    onClick={() => setActiveCategory(category.id)}
+                    onClick={() => setSelectedCategory(category.id)}
                     className={`
                       flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors
                       ${
-                        activeCategory === category.id
+                        selectedCategory === category.id
                           ? "bg-primary-500"
                           : "bg-white hover:bg-primary-50"
                       }
@@ -370,7 +348,7 @@ export default function Orders() {
                       className={`
                       text-xs px-2 py-1 rounded-full text-white font-bold
                       ${
-                        activeCategory === category.id
+                        selectedCategory === category.id
                           ? "bg-primary-400"
                           : "bg-slate-500"
                       }
@@ -482,7 +460,7 @@ export default function Orders() {
                     <Users size={16} />
                     <span>
                       Table{" "}
-                      {tables.find((t) => t.id === selectedTable)?.table_number}
+                      {selectedTable.table_number}
                     </span>
                   </div>
                 ) : (
@@ -502,10 +480,10 @@ export default function Orders() {
                     Choose an available table to start taking orders
                   </p>
                 </div>
-              ) : orderItems.length > 0 ? (
+              ) : cartItems.length > 0 ? (
                 <>
                   <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
-                    {orderItems.map((item) => (
+                    {cartItems.map((item) => (
                       <div
                         key={item.id}
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
@@ -553,13 +531,12 @@ export default function Orders() {
                       <button
                         onClick={submitOrder}
                         disabled={
-                          submittingOrder ||
                           !selectedTable ||
-                          orderItems.length === 0
+                          cartItems.length === 0
                         }
                         className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
                       >
-                        {submittingOrder ? "Submitting..." : "Send to Kitchen"}
+                        Send to Kitchen
                       </button>
                       <button className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors">
                         Save Draft
@@ -585,14 +562,14 @@ export default function Orders() {
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div className="bg-primary-50 rounded-lg p-3">
                     <div className="text-2xl font-bold text-primary-600">
-                      {orderItems.reduce((sum, item) => sum + item.quantity, 0)}
+                      {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
                     </div>
                     <div className="text-xs text-primary-700">Items</div>
                   </div>
                   <div className="bg-blue-50 rounded-lg p-3">
                     <div className="text-2xl font-bold text-blue-600">
-                      {orderItems.length > 0
-                        ? Math.max(...orderItems.map((item) => item.prep_time))
+                      {cartItems.length > 0
+                        ? Math.max(...cartItems.map((item) => item.prep_time))
                         : 0}
                     </div>
                     <div className="text-xs text-blue-700">Max Prep (min)</div>
