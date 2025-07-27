@@ -2,39 +2,21 @@
 
 import { useState, useEffect } from "react";
 import {
-  Home,
-  UtensilsCrossed,
-  Star,
-  Sun,
-  Bell,
-  User,
   Search,
   Plus,
-  Edit3,
   Trash2,
   Package,
   AlertTriangle,
-  TrendingUp,
-  TrendingDown,
-  Clock,
-  DollarSign,
-  Users,
-  Filter,
   X,
-  Save,
-  RotateCcw,
   Edit2,
   CheckCircle,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import {
   getInventoryItems,
   createInventoryItem,
-  updateInventoryItem,
   deleteInventoryItem,
-  getLowStockItems,
 } from "@/lib/api/inventory";
 
 interface InventoryItem {
@@ -66,12 +48,9 @@ interface NewInventoryItem {
 }
 
 export default function Inventory() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState("inventory");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
   // Data from Supabase
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
@@ -89,12 +68,6 @@ export default function Inventory() {
     unit_price: 0,
     supplier: "",
   });
-
-  const sidebarItems = [
-    { id: "home", icon: Home, label: "Home" },
-    { id: "orders", icon: UtensilsCrossed, label: "Orders" },
-    { id: "inventory", icon: Package, label: "Inventory" },
-  ];
 
   // Load data from Supabase
   useEffect(() => {
@@ -523,7 +496,7 @@ export default function Inventory() {
 
       {/* Add Item Modal */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
@@ -565,7 +538,7 @@ export default function Inventory() {
                     onChange={(e) =>
                       setNewItem({
                         ...newItem,
-                        category: e.target.value as any,
+                        category: e.target.value as "ingredients" | "beverages" | "supplies" | "equipment",
                       })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"

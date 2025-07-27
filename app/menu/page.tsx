@@ -7,13 +7,9 @@ import {
   Trash2,
   X,
   Clock,
-  DollarSign,
-  Star,
-  Upload,
   Tag,
   Search,
 } from "lucide-react";
-import Image from "next/image";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import {
@@ -535,7 +531,7 @@ export default function MenuManagement() {
                       </button>
                       <button
                         onClick={() => handleDeleteItem(item.id)}
-                        className="bg-red-500 text-white py-2.5 px-4 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center"
+                        className="bg-red-400 text-white py-2.5 px-4 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center"
                         title="Delete item"
                       >
                         <Trash2 size={16} />
@@ -571,7 +567,7 @@ export default function MenuManagement() {
 
       {/* Add Item Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
@@ -850,7 +846,7 @@ export default function MenuManagement() {
 
       {/* Edit Item Modal */}
       {editingItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
