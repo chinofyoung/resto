@@ -30,6 +30,9 @@ interface Stats {
   total?: number;
   available?: number;
   occupied?: number;
+  totalItems?: number;
+  lowStockItems?: number;
+  todayRevenue?: number;
   [key: string]: unknown;
 }
 
